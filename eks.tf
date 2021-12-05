@@ -5,9 +5,17 @@ module "eks" {
   subnets                   = module.vpc.private_subnets
   cluster_security_group_id = aws_security_group.cluster_security_group.id
   write_kubeconfig          = false
-  map_roles = local.map_roles
-  vpc_id = module.vpc.vpc_id
-  worker_groups = local.worker_groups
+  vpc_id                    = module.vpc.vpc_id
+
+  worker_groups = [
+    {
+      name                 = "worker-1-19"
+      instance_type        = "t2.small"
+      ami_id               = aws_ami_copy.eks_worker_1_19.id
+      additional_security_group_ids = [aws_security_group.all_worker_mgmt.id]
+      asg_desired_capacity = "2"
+    },
+  ]
 }
 
 data "aws_ami" "eks_worker_base_1_18" {
@@ -62,3 +70,8 @@ data "aws_eks_cluster_auth" "cluster" {
   name = module.eks.cluster_id
 }
 
+provider "kubernetes" {
+  host                   = data.aws_eks_cluster.cluster.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
+  token                  = data.aws_eks_cluster_auth.cluster.token
+}
