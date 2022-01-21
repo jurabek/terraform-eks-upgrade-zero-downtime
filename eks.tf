@@ -9,11 +9,24 @@ module "eks" {
 
   worker_groups = [
     {
-      name                 = "worker-1-19"
-      instance_type        = "t2.small"
-      ami_id               = aws_ami_copy.eks_worker_1_19.id
+      name                           = "worker-1-19"
+      instance_type                 = "t2.small"
+      ami_id                        = aws_ami_copy.eks_worker_1_19.id
       additional_security_group_ids = [aws_security_group.all_worker_mgmt.id]
-      asg_desired_capacity = "2"
+      asg_max_size                  = 3
+      asg_min_size                  = 1
+      asg_desired_capacity          = 2
+    },
+    # old worker group we should keep with 0 capacity, in order to keep worker group indeces 
+    # if we upgrade our cluster from 1-19 to 1-20 this worker group name will be worker-1-20 and capacity 2, worker-1-19 capacity will become 0
+    {
+      name                          = "worker-1-18"
+      instance_type                 = "t2.small"
+      ami_id                        = aws_ami_copy.eks_worker_1_18.id
+      additional_security_group_ids = [aws_security_group.all_worker_mgmt.id]
+      asg_max_size                  = 0
+      asg_min_size                  = 0
+      asg_desired_capacity          = 0
     },
   ]
 }
